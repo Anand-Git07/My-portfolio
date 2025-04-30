@@ -4,8 +4,8 @@ Welcome to my personal developer portfolio! This website is a showcase of who I 
 
 ## 👨‍💻 About Me
 
-I’m Anand, a passionate Software Engineer currently working at iFIX Tech Global. I specialize in Software Quality Assurance using Python and Selenium, and I’m also exploring backend development with Golang. I’m enthusiastic about learning and building impactful digital solutions.
-
+I’m Anand,second-year BCA student at AMC Engineering College
+specializing in full stack web development with a focus on the MERN stack.
 🚀 **Skills**:  
 - Languages: Python, JavaScript
 - Web Development: HTML, CSS, JavaScript, React (in progress)  
