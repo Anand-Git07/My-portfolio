@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space War Game</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: black; cursor: none; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Game assets
+        const assets = {
+            player: new Image(),
+            enemy: new Image(),
+            boss: new Image(),
+            bossSoldier: new Image(),
+            bullet: new Image(),
+            healthPack: new Image(),
+            firePower: new Image(),
+            background: new Image()
+        };
+
+        // Set image sources (replace with your actual URLs)
+        assets.player.src = 'https://media.indiedb.com/images/articles/1/149/148067/sprite_battleclass_0.png'; // Your rocket image URL
+        assets.enemy.src = 'https://cdna.artstation.com/p/assets/covers/images/059/774/182/large/ledifen-ledifen-finale-thumbnail.jpg'; // Your enemy image URL
+        assets.boss.src = 'https://i.pinimg.com/originals/3b/03/94/3b0394153492f7a2e31e80bb9e4c4fb5.gif'; // Your boss image URL
+        assets.bossSoldier.src = 'https://sa-matra.net/content/sc3/ur-quan/sc3-dreadnought.png'; // Your boss soldier image URL
+        assets.bullet.src = 'https://www.icirnigeria.org/wp-content/uploads/2020/10/pexels-iconcom-216640.jpg'; // Your bullet image URL
+        assets.healthPack.src = 'https://wallpapers.com/images/hd/glowing-red-heart-black-background-wowygd2cdokw9ax3.png'; // Your health pack image URL
+        assets.firePower.src = 'https://cossky.com/cdn/shop/products/O1CN01Oj0ytR20vI01nPiNl__972796911-0-cib_1024x.jpg'; // Your fire power image URL
+        assets.background.src = 'https://img.freepik.com/free-vector/sticker-template-with-rocket-ship-isolated_1308-77921.jpg'; // Your background image URL
+
+        // Starfield background
+        const stars = [];
+        for (let i = 0; i < 200; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 2,
+                speed: Math.random() * 0.5 + 0.1
+            });
+        }
+
+        class Rocket {
+            constructor() {
+                this.x = canvas.width / 2;
+                this.y = canvas.height - 100;
+                this.width = 50;
+                this.height = 50;
+                this.health = 100;
+                this.maxHealth = 100;
+                this.score = 0;
+                this.bulletCount = 1;
+                this.invulnerable = false;
+                this.invulnerableTimer = 0;
+                this.bossDefeatedCount = 0;
+            }
+            draw() {
+                if (this.invulnerable && Math.floor(Date.now() / 100) % 2 === 0) {
+                    ctx.globalAlpha = 0.5;
+                }
+                
+                // Draw rocket image
+                ctx.drawImage(assets.player, this.x, this.y, this.width, this.height);
+                
+                // Health bar
+                ctx.fillStyle = "red";
+                ctx.fillRect(this.x, this.y - 15, this.width, 5);
+                ctx.fillStyle = "green";
+                ctx.fillRect(this.x, this.y - 15, this.width * (this.health / this.maxHealth), 5);
+                
+                ctx.globalAlpha = 1.0;
+            }
+            update() {
+                if (this.invulnerable) {
+                    this.invulnerableTimer--;
+                    if (this.invulnerableTimer <= 0) {
+                        this.invulnerable = false;
+                    }
+                }
+            }
+            fire() {
+                const bullets = [];
+                const centerX = this.x + this.width / 2 - 2.5;
+                
+                if (this.bulletCount === 1) {
+                    bullets.push(new Bullet(centerX, this.y));
+                } else {
+                    const spread = Math.min(40, (this.bulletCount - 1) * 10);
+                    for (let i = 0; i < this.bulletCount; i++) {
+                        const offset = (i - (this.bulletCount - 1) / 2) * spread;
+                        bullets.push(new Bullet(centerX + offset, this.y));
+                    }
+                }
+                return bullets;
+            }
+        }
+
+        class Enemy {
+            constructor(x, y, speed, health = 1) {
+                this.x = x;
+                this.y = y;
+                this.width = 40;
+                this.height = 40;
+                this.speed = speed;
+                this.health = health;
+                this.lastFired = 0;
+            }
+            draw() {
+                ctx.drawImage(assets.enemy, this.x, this.y, this.width, this.height);
+            }
+            move() {
+                this.y += this.speed;
+            }
+            fire() {
+                return null; // Regular enemies don't fire by default
+            }
+        }
+
+        class BossSoldier extends Enemy {
+            constructor(x, y) {
+                super(x, y, 4, 3); // Slower but tougher than regular enemies
+                this.width = 45;
+                this.height = 45;
+                this.lastFired = 0;
+            }
+            draw() {
+                ctx.drawImage(assets.bossSoldier, this.x, this.y, this.width, this.height);
+            }
+            fire() {
+                const now = Date.now();
+                if (now - this.lastFired > 1500) { // Fire every 1.5 seconds
+                    this.lastFired = now;
+                    const bullets = [];
+                    // Fire 3 bullets in a small spread
+                    for (let i = 0; i < 3; i++) {
+                        const offset = (i - 1) * 15;
+                        bullets.push(new EnemyBullet(this.x + this.width/2 + offset - 4, this.y + this.height));
+                    }
+                    return bullets;
+                }
+                return null;
+            }
+        }
+
+        class Boss {
+            constructor() {
+                this.x = canvas.width / 2 - 75;
+                this.y = 50;
+                this.width = 150;
+                this.height = 80;
+                this.maxHealth = 20 + (player.bossDefeatedCount * 5); // Gets stronger each time
+                this.health = this.maxHealth;
+                this.speed = 2 + (player.bossDefeatedCount * 0.3); // Faster each time
+                this.direction = 1;
+                this.lastFired = 0;
+                this.isActive = false;
+                this.entryAnimation = 0;
+                this.lastSoldierSpawn = 0;
+            }
+            draw() {
+                ctx.drawImage(assets.boss, this.x, this.y, this.width, this.height);
+                
+                // Health bar
+                ctx.fillStyle = "red";
+                ctx.fillRect(this.x, this.y - 20, this.width, 10);
+                ctx.fillStyle = "green";
+                ctx.fillRect(this.x, this.y - 20, this.width * (this.health / this.maxHealth), 10);
+            }
+            move() {
+                if (this.entryAnimation < 100) {
+                    this.entryAnimation++;
+                    this.y = 50 - (100 - this.entryAnimation);
+                    return;
+                }
+                
+                this.x += this.speed * this.direction;
+                if (this.x <= 0 || this.x + this.width >= canvas.width) {
+                    this.direction *= -1;
+                }
+            }
+            fire() {
+                const now = Date.now();
+                if (now - this.lastFired > 800 - (player.bossDefeatedCount * 50)) { // Fires faster each time
+                    this.lastFired = now;
+                    const bullets = [];
+                    const bulletCount = 3 + Math.floor(player.bossDefeatedCount / 2);
+                    
+                    for (let i = 0; i < bulletCount; i++) {
+                        const offset = (i - (bulletCount - 1)/2) * 30;
+                        bullets.push(new EnemyBullet(this.x + this.width/2 + offset - 5, this.y + this.height));
+                    }
+                    return bullets;
+                }
+                return null;
+            }
+            spawnSoldier() {
+                const now = Date.now();
+                if (now - this.lastSoldierSpawn > 3000) { // Every 3 seconds
+                    this.lastSoldierSpawn = now;
+                    return new BossSoldier(this.x + this.width/2 - 22.5, this.y + this.height);
+                }
+                return null;
+            }
+        }
+
+        class Bullet {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 5;
+                this.height = 15;
+                this.speed = 12;
+            }
+            draw() {
+                ctx.drawImage(assets.bullet, this.x, this.y, this.width, this.height);
+            }
+            move() {
+                this.y -= this.speed;
+            }
+        }
+
+        class EnemyBullet {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 8;
+                this.height = 20;
+                this.speed = 7;
+            }
+            draw() {
+                ctx.fillStyle = "orange";
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+            move() {
+                this.y += this.speed;
+            }
+        }
+
+        class PowerUp {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.width = 30;
+                this.height = 30;
+                this.type = type;
+                this.speed = 2;
+            }
+            draw() {
+                const img = this.type === 'health' ? assets.healthPack : assets.firePower;
+                ctx.drawImage(img, this.x, this.y, this.width, this.height);
+            }
+            move() {
+                this.y += this.speed;
+            }
+        }
+
+        const player = new Rocket();	
+        const enemies = [];
+        const bullets = [];
+        const enemyBullets = [];
+        const powerUps = [];
+        let enemySpeed = 8;
+        let gameOver = false;
+        const boss = new Boss();
+        let bossSpawnTime = Date.now();
+        let lastStarUpdate = Date.now();
+        let lastSoldierSpawn = Date.now();
+
+        function spawnEnemy() {
+            for (let i = 0; i < 3; i++) {
+                enemies.push(new Enemy(Math.random() * canvas.width, -50, enemySpeed));
+            }
+        }
+
+        function spawnBossSoldier() {
+            if (Math.random() < 0.3) { // 30% chance to spawn
+                enemies.push(new BossSoldier(Math.random() * canvas.width, -50));
+            }
+        }
+
+        function spawnPowerUp() {
+            const types = ['health', 'firePower'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            powerUps.push(new PowerUp(Math.random() * canvas.width, -50, type));
+        }
+
+        function activateBoss() {
+            boss.isActive = true;
+            boss.health = boss.maxHealth;
+            boss.x = canvas.width / 2 - 75;
+            boss.direction = 1;
+            boss.entryAnimation = 0;
+        }
+
+        function drawStars() {
+            const now = Date.now();
+            const delta = now - lastStarUpdate;
+            lastStarUpdate = now;
+            
+            ctx.fillStyle = "white";
+            stars.forEach(star => {
+                star.y += star.speed * (delta / 16);
+                if (star.y > canvas.height) {
+                    star.y = 0;
+                    star.x = Math.random() * canvas.width;
+                }
+                ctx.fillRect(star.x, star.y, star.size, star.size);
+            });
+        }
+
+        setInterval(spawnEnemy, 800);
+        setInterval(spawnBossSoldier, 4000);
+        setInterval(spawnPowerUp, 10000);
+        setInterval(() => { enemySpeed += 0.5; }, 10000);
+        
+        // Boss spawn timer - every 20 seconds
+        setInterval(() => {
+            if (!boss.isActive) {
+                activateBoss();
+            }
+        }, 20000);
+
+        canvas.addEventListener("mousemove", (e) => {
+            if (!gameOver) {
+                player.x = e.clientX - player.width / 2;
+                player.y = e.clientY - player.height / 2;
+            }
+        });
+
+        canvas.addEventListener("mousedown", () => {
+            if (!gameOver) {
+                bullets.push(...player.fire());
+            }
+        });
+
+        function updateBullets() {
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const bullet = bullets[i];
+                bullet.draw();
+                bullet.move();
+                if (bullet.y < 0) {
+                    bullets.splice(i, 1);
+                    continue;
+                }
+
+                // Check collision with enemies
+                for (let j = enemies.length - 1; j >= 0; j--) {
+                    const enemy = enemies[j];
+                    if (
+                        bullet.x < enemy.x + enemy.width &&
+                        bullet.x + bullet.width > enemy.x &&
+                        bullet.y < enemy.y + enemy.height &&
+                        bullet.y + bullet.height > enemy.y
+                    ) {
+                        enemy.health--;
+                        if (enemy.health <= 0) {
+                            enemies.splice(j, 1);
+                            player.score += enemy instanceof BossSoldier ? 30 : 10;
+                        }
+                        bullets.splice(i, 1);
+                        break;
+                    }
+                }
+
+                // Check collision with boss
+                if (boss.isActive && 
+                    bullet.x < boss.x + boss.width &&
+                    bullet.x + bullet.width > boss.x &&
+                    bullet.y < boss.y + boss.height &&
+                    bullet.y + bullet.height > boss.y
+                ) {
+                    boss.health--;
+                    bullets.splice(i, 1);
+                    if (boss.health <= 0) {
+                        boss.isActive = false;
+                        player.score += 500;
+                        player.bossDefeatedCount++;
+                        bossSpawnTime = Date.now();
+                    }
+                }
+            }
+        }
+
+        function updateEnemyBullets() {
+            for (let i = enemyBullets.length - 1; i >= 0; i--) {
+                const bullet = enemyBullets[i];
+                bullet.draw();
+                bullet.move();
+                if (bullet.y > canvas.height) {
+                    enemyBullets.splice(i, 1);
+                    continue;
+                }
+
+                // Check collision with player
+                if (!player.invulnerable &&
+                    player.x < bullet.x + bullet.width &&
+                    player.x + player.width > bullet.x &&
+                    player.y < bullet.y + bullet.height &&
+                    player.y + player.height > bullet.y
+                ) {
+                    player.health -= 10;
+                    enemyBullets.splice(i, 1);
+                    player.invulnerable = true;
+                    player.invulnerableTimer = 60;
+                    
+                    if (player.health <= 0) {
+                        player.health = 0;
+                        gameOver = true;
+                        setTimeout(() => {
+                            alert(`Game Over! Score: ${player.score}\nBosses Defeated: ${player.bossDefeatedCount}`);
+                            document.location.reload();
+                        }, 100);
+                    }
+                }
+            }
+        }
+
+        function updateEnemies() {
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i];
+                enemy.draw();
+                enemy.move();
+
+                // Check if enemy should fire
+                const newBullets = enemy.fire();
+                if (newBullets) {
+                    enemyBullets.push(...newBullets);
+                }
+
+                if (enemy.y > canvas.height) {
+                    enemies.splice(i, 1);
+                    continue;
+                }
+                
+                // Check collision with player
+                if (!player.invulnerable &&
+                    player.x < enemy.x + enemy.width &&
+                    player.x + player.width > enemy.x &&
+                    player.y < enemy.y + enemy.height &&
+                    player.y + player.height > enemy.y
+                ) {
+                    player.health -= enemy instanceof BossSoldier ? 15 : 20;
+                    enemies.splice(i, 1);
+                    player.invulnerable = true;
+                    player.invulnerableTimer = 60;
+                    
+                    if (player.health <= 0) {
+                        player.health = 0;
+                        gameOver = true;
+                        setTimeout(() => {
+                            alert(`Game Over! Score: ${player.score}\nBosses Defeated: ${player.bossDefeatedCount}`);
+                            document.location.reload();
+                        }, 100);
+                    }
+                }
+            }
+        }
+
+        function updateBoss() {
+            if (!boss.isActive) return;
+            
+            boss.draw();
+            boss.move();
+            
+            // Boss firing
+            const newBullets = boss.fire();
+            if (newBullets) {
+                enemyBullets.push(...newBullets);
+            }
+            
+            // Boss spawning soldiers
+            const newSoldier = boss.spawnSoldier();
+            if (newSoldier) {
+                enemies.push(newSoldier);
+            }
+        }
+
+        function updatePowerUps() {
+            for (let i = powerUps.length - 1; i >= 0; i--) {
+                const powerUp = powerUps[i];
+                powerUp.draw();
+                powerUp.move();
+
+                if (powerUp.y > canvas.height) {
+                    powerUps.splice(i, 1);
+                    continue;
+                }
+
+                if (
+                    player.x < powerUp.x + powerUp.width &&
+                    player.x + player.width > powerUp.x &&
+                    player.y < powerUp.y + powerUp.height &&
+                    player.y + player.height > powerUp.y
+                ) {
+                    if (powerUp.type === 'health') {
+                        player.health = Math.min(player.health + 30, player.maxHealth);
+                    } else {
+                        player.bulletCount = Math.min(player.bulletCount + 1, 7); // Max 7 bullets
+                    }
+                    powerUps.splice(i, 1);
+                }
+            }
+        }
+
+        function gameLoop() {
+            if (gameOver) return;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawStars();
+            player.draw();
+            player.update();
+            updateBullets();
+            updateEnemyBullets();
+            updateEnemies();
+            updateBoss();
+            updatePowerUps();
+            drawHUD();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function drawHUD() {
+            ctx.fillStyle = "white";
+            ctx.font = "20px Arial";
+            ctx.fillText("Score: " + player.score, 20, 30);
+            ctx.fillText("Health: " + player.health, 20, 60);
+            ctx.fillText("Bullets: " + player.bulletCount, 20, 90);
+            ctx.fillText("Bosses: " + player.bossDefeatedCount, 20, 120);
+            
+            if (!boss.isActive) {
+                const timeSinceLastBoss = Date.now() - bossSpawnTime;
+                const timeUntilNextBoss = Math.max(0, 20000 - timeSinceLastBoss);
+                const seconds = Math.ceil(timeUntilNextBoss / 1000);
+                ctx.fillText("Next boss: " + seconds + "s", canvas.width - 150, 30);
+            }
+            
+            if (boss.isActive) {
+                ctx.fillStyle = "red";
+                ctx.font = "24px Arial";
+                ctx.fillText("BOSS FIGHT! Lv." + (player.bossDefeatedCount + 1), canvas.width/2 - 100, 40);
+            }
+        }
+
+        // Wait for images to load
+        let imagesLoaded = 0;
+        const totalImages = Object.keys(assets).length;
+        
+        function imageLoaded() {
+            imagesLoaded++;
+            if (imagesLoaded === totalImages) {
+                gameLoop();
+            }
+        }
+        
+        Object.values(assets).forEach(img => {
+            img.onload = imageLoaded;
+        });
+    </script>
+</body>
+</html>
