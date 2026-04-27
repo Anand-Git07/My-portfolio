@@ -1,36 +1,74 @@
-# 💼 Anand's Developer Portfolio
+# Anand Raj — Portfolio (React)
 
-Welcome to my personal developer portfolio! This website is a showcase of who I am, what I’ve built, and the skills I bring to the table as a growing software engineer.
+Modern dark portfolio built with React 18. All content is centralised in one data file.
 
-## 👨‍💻 About Me
+## 📁 File Structure
 
-I’m Anand,second-year BCA student at AMC Engineering College
-specializing in full stack web development with a focus on the MERN stack.
-🚀 **Skills**:  
-- Languages: Python, JavaScript
-- Web Development: HTML, CSS, JavaScript, React (in progress)  
-- Other: Git, GitHub, 
+```
+portfolio/
+├── public/
+│   └── index.html              ← HTML shell (font imports live here)
+├── src/
+│   ├── components/
+│   │   ├── Navbar.jsx / .css   ← Fixed nav with scroll effect
+│   │   ├── Hero.jsx / .css     ← Animated hero + code visual
+│   │   ├── About.jsx / .css    ← Bio, stats, tech stack bars
+│   │   ├── Skills.jsx / .css   ← Skill cards with hover glow
+│   │   ├── Projects.jsx / .css ← Project cards grid
+│   │   ├── Education.jsx / .css← Timeline section
+│   │   ├── Contact.jsx / .css  ← Email + social links
+│   │   └── Footer.jsx / .css   ← Footer
+│   ├── data/
+│   │   └── portfolio.js        ← ✅ ALL content here — edit this file only
+│   ├── styles/
+│   │   └── global.css          ← CSS variables, resets, animations
+│   ├── App.jsx                 ← Root component — assembles everything
+│   └── index.js                ← React entry point
+├── package.json
+└── README.md
+```
 
-## 🌟 Portfolio Highlights
+## 🚀 Getting Started
 
-### 1. 🚀 Space War Game
-An exciting arcade-style shooting game created using HTML, CSS, and JavaScript.  
-**Features:**
-- Spaceship movement and shooting mechanics
-- Enemy objects and score tracking
-- Collision effects and sound integration
+```bash
+# 1. Install dependencies
+npm install
 
-> Tech Used: HTML, CSS, JavaScript  
-> Project Type: Minor Game Project
+# 2. Start dev server
+npm start
 
-### 2. 🎮 Simon Game
-A color memory game inspired by the classic Simon game.  
-**Features:**
-- Random color sequence generation
-- Level progression and user feedback
-- Audio and visual interaction
+# 3. Build for production
+npm run build
+```
 
-> Tech Used: HTML, CSS, JavaScript  
-> Project Type: Minor Game Project
+## ✏️ Updating Content
 
-## 📁 Project Structure
+**All your personal data lives in one place:**
+
+```
+src/data/portfolio.js
+```
+
+Edit that file to update:
+- Your name, email, tagline, about paragraphs
+- Stats, tech stack bars
+- Skills cards
+- Projects (title, description, links, tech tags)
+- Education entries
+- Social media links
+
+No need to touch any component files — just update the data file.
+
+## 🌐 Deploying to GitHub Pages
+
+```bash
+# Install gh-pages
+npm install --save-dev gh-pages
+
+# Add to package.json scripts:
+# "predeploy": "npm run build",
+# "deploy": "gh-pages -d build"
+# Also add: "homepage": "https://Anand-Git07.github.io/portfolio"
+
+npm run deploy
+```

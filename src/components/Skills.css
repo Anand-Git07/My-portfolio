@@ -1,0 +1,76 @@
+.skills {
+  padding: 6rem 6%;
+  background: var(--bg2);
+  position: relative;
+  z-index: 1;
+}
+
+.skills__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 4rem;
+}
+
+.skill-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 2rem;
+  transition: border-color 0.4s, transform 0.4s;
+  position: relative;
+  overflow: hidden;
+}
+
+.skill-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.4s;
+  border-radius: 14px;
+}
+
+.skill-card--cyan::before  { background: linear-gradient(135deg, rgba(0, 245, 212, 0.05), transparent); }
+.skill-card--purple::before{ background: linear-gradient(135deg, rgba(124, 58, 237, 0.07), transparent); }
+.skill-card--amber::before { background: linear-gradient(135deg, rgba(245, 158, 11, 0.07), transparent); }
+
+.skill-card:hover::before        { opacity: 1; }
+.skill-card--cyan:hover          { border-color: rgba(0, 245, 212, 0.25); transform: translateY(-4px); }
+.skill-card--purple:hover        { border-color: rgba(124, 58, 237, 0.3); transform: translateY(-4px); }
+.skill-card--amber:hover         { border-color: rgba(245, 158, 11, 0.25); transform: translateY(-4px); }
+
+.skill-card__icon  { font-size: 2rem; margin-bottom: 1rem; }
+.skill-card__title { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; margin-bottom: 0.6rem; }
+.skill-card__desc  { font-size: 0.85rem; color: var(--muted); line-height: 1.7; }
+
+.skill-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 1rem;
+}
+
+.tag {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 4px;
+}
+
+/* Tag colour per parent card */
+.skill-card--cyan   .tag { background: rgba(0,245,212,0.08); border: 1px solid rgba(0,245,212,0.15); color: var(--accent); }
+.skill-card--purple .tag { background: rgba(124,58,237,0.08); border: 1px solid rgba(124,58,237,0.2); color: #a78bfa; }
+.skill-card--amber  .tag { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); color: #fbbf24; }
+
+/* Scroll animation (reused class) */
+.animate-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.animate-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}

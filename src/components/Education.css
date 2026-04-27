@@ -1,0 +1,65 @@
+.education {
+  padding: 6rem 6%;
+  position: relative;
+  z-index: 1;
+}
+
+.timeline {
+  position: relative;
+  margin-top: 4rem;
+  padding-left: 2rem;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border);
+}
+
+.timeline__item {
+  position: relative;
+  padding-bottom: 3rem;
+}
+
+.timeline__item::before {
+  content: '';
+  position: absolute;
+  left: -2.35rem;
+  top: 0.35rem;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent2);
+  border: 2px solid var(--bg);
+}
+
+.timeline__date {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  margin-bottom: 0.5rem;
+}
+
+.timeline__title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+.timeline__org {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 0.8rem;
+}
+
+.timeline__desc {
+  font-size: 0.87rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
