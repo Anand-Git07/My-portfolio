@@ -1,4 +1,4 @@
-# Anand Raj — Portfolio (React)
+# Anand Raj — Portfolio
 
 Modern dark portfolio built with React 18. All content is centralised in one data file.
 
