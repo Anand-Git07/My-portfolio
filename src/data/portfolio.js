@@ -65,7 +65,7 @@ export const skills = [
     icon: '🤖',
     title: 'Generative AI',
     desc: 'Integrating LLMs and AI APIs into real applications — chatbots, content generation, and intelligent assistants.',
-    tags: ['LLM APIs', 'Prompt Eng.', 'AI Integration'],
+    tags: ['LLM','LangChain', 'Prompt Eng.', 'AI Integration','Hugging Face','TensorFlow/Keras,'],
     color: 'cyan',
   },
   // {
